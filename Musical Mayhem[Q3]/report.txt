@@ -1,0 +1,109 @@
+------------------
+| MUSICAL MAYHEM |
+------------------
+
+This simulation has been made for problem statement of Musical Mayhem.
+There are 3 different kinds of entities assumed for the implementation of the code:
+(1) Performance Stage (both acoustic and electric)
+(2) Musicians (both singer and non-singer)
+(3) Co-Ordinators
+
+** Their respective struct has been declared with full inline comments that don't need any extra clarification.
+
+One global semaphore has been made i.e. 'tshirt_ready'. It is Semaphore for number of 
+waiting musicians to collect t-shirts.It will get incremented when a musician starts 
+waiting for t-shirt collection. This will reduce "BUSY WAITING" for co-ordinators threads 
+if exist! In short,
+The use of semaphore is to prevent multiple coordinators from getting triggered by a
+single musician and thus prevents busy waiting.
+
+** Due to time constraint, I have not implemented code for removing "BUSY WAITING" among Musicians.
+
+Mutex for each stages have been made to implement Mutual exclusion by Musicians while 
+accessing same stage.
+Similarly, Mutex for each Musicians have been made implement Mutual exclusion by Co-ordinator while 
+accessing same Musician to give T-Shirt.
+
+
+Few Assumptions:
+----------------
+1- I have printed a for acoustic stage and e for electric stage.
+
+2- At max 1000 of all entities each is allowed.
+
+3- Total stages sum including both acoustic and electric, will be less than 1000.
+   Suppose ax is total acoustic stage and ex is total electric stage then ax+ae < 1000,
+   Also, array of entity stage,i.e. "stage[1000]" will have first ax elemnts for 
+   acoustic stage and next ex elemnts for electric stage.
+   so, basically I have concatenated electric stage on acoustic stage.
+
+   Suppose, ax=2 and ex=3
+   then stage[0] will be acoustic stage with ID 1
+   stage[1] will be acoustic stage with ID 2
+   stage[2] will be acoustic stage with ID 3
+   stage[3] will be electric stage with ID 4
+   stage[4] will be electric stage with ID 5
+
+4- I have printed co-ordinator ID also for track of co-ordinators.
+
+BONUS :-
+--------
+Both Bonus Question part have been implemented. That is,
+** Singers can also collect T-shirt
+** Implemented Track of stage number joined by each Musicians/Singers, (can be seen by following type of output).
+
+Say for any simulation following line appears:
+ =>     Manas perorming g at [a] stage[2] for 9 sec.         <=
+ then stage[2] is the ID of that stage. It can be acoustic/electric depending on ax and ex
+ as explained in Assumption 3.
+          
+
+Basic Flow of code [int main function()] :-
+-------------------------------------------
+
+-> Initialise all the entities data.
+-> Handled cases, if any of the first line input is '0'.
+-> Created threads for Musicians and Co-ordinators. Then simulation will be started.
+-> Joining all the Musicians thread, which will cause to complete simulation then print "SIMULATION OVER".
+-> Then destroy All stage's mutex and cancel All Co-ordinator's thread.
+-> Code stop!
+
+
+Explanation of Co-ordinator Thread Function :-
+----------------------------------------------
+
+-> The while loop of co-ordinator thread will be executed infinitely until SIMULATION GET OVER.
+-> For each loop , it will wait for Semaphore 'tshirt_ready' , that will remove BUSY WAITING.
+-> On getting Signal/Post for semaphore , function will check for all musician and find the first 
+   Musician Who has Status "Waiting_for_Tshirt".
+-> For simulating giving of T-shirt, code will sleep() for 2 sec and update it's status to "tshirt_collected".
+-> Also , post/signal to ' T_collecting ' semaphore to corresponding musician. 
+-> Print something like below statement and re-enter while loop.
+
+         =>   Ayush s collected t-shirt from co-ordinator 3    <=
+
+
+
+Explanation of Musician Thread Function :-
+----------------------------------------------
+
+-> Sleeps until arrival time for each musician thread
+-> Loops through the list of stages to find the apporopriate stage available
+-> If waiting time exceeded the max_wait then it breaks the loop with a message of left because of impatience.
+-> If musician is a singer then he/she also has the added option of joining a musician's performance
+-> When a musician gets a stage it will sleep for the sake of SIMULATION of performance.
+-> Status of Musician have been changed accordingly in the code.
+-> In-case of a singer joining performace it's increases the overall performace time by 2 secs
+-> After the performance, it there are non-zero co-ordinators then post/signal for semaphore 'tshirt_ready'.
+   And wait for getting T-Shirts i.e. sigaling / posting on semaphore 'T_collecting' from the co-ordinator.
+-> Otherwise leave with sad face.
+-> I have printed co-ordinator ID also.
+
+
+
+
+
+ ____________________________________________________________________________________
+|                                                                                    |
+|                                !!  THE END !!                                      |
+|____________________________________________________________________________________|

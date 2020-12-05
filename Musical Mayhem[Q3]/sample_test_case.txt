@@ -1,0 +1,202 @@
+This file has been made for writting few tested sample cases for Question 3 solution.
+
+** On console they will be color full.
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[Sample test 1 Trial]
+
+INPUT:
+
+5 4 1 1 2 10 5                        
+Tanvi p 0
+Manas g 0
+Shreya s 0
+Pahun s 0
+Ayu s 0
+
+OUTPUT:
+
+
+
+SIMULATION BEGIN
+
+Tanvi p arrives at Srujana
+Tanvi perorming p at [a] stage[1] for 3 sec.
+Manas g arrives at Srujana
+Manas perorming g at [a] stage[2] for 9 sec.
+Shreya s arrives at Srujana
+Singer Shreya joined the Musician Tanvi performance
+Pahun s arrives at Srujana
+Singer Pahun joined the Musician Manas performance
+Ayu s arrives at Srujana
+Ayu perorming s at [a] stage[3] for 2 sec.
+Ayu perormance s at [a] stage[3] finished.
+Ayu collecting t-shirt
+Ayu s collected t-shirt from co-ordinator 1
+Ayu s returned home happily :)...Yayy!!
+Tanvi perormance p at [a] stage[1] finished.
+Shreya perormance s at [a] stage[1] finished.
+Shreya collecting t-shirt
+Tanvi collecting t-shirt
+Tanvi p collected t-shirt from co-ordinator 1
+Tanvi p returned home happily :)...Yayy!!
+Shreya s collected t-shirt from co-ordinator 1
+Shreya s returned home happily :)...Yayy!!
+Manas perormance g at [a] stage[2] finished.
+Pahun perormance s at [a] stage[2] finished.
+Pahun collecting t-shirt
+Manas collecting t-shirt
+Manas g collected t-shirt from co-ordinator 1
+Manas g returned home happily :)...Yayy!!
+Pahun s collected t-shirt from co-ordinator 1
+Pahun s returned home happily :)...Yayy!!
+
+SIMULATION OVER
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+[Sample test 2 Trial]
+INPUT:
+
+1 1 1 1 1 3 5
+Ayush b 3
+
+OUTPUT: 
+
+
+SIMULATION BEGIN
+
+Ayush b arrives at Srujana
+Ayush perorming b at [e] stage[2] for 2 sec.
+Ayush perormance b at [e] stage[2] finished.
+Ayush collecting t-shirt
+Ayush b collected t-shirt from co-ordinator 1
+Ayush b returned home happily :)...Yayy!!
+
+SIMULATION OVER
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+[Sample test 3 Trial]
+
+INPUT:
+
+
+2 1 0 2 1 4 3
+A s 2
+B b 1
+
+
+OUTPUT:
+
+
+SIMULATION BEGIN
+
+B b arrives at Srujana
+A s arrives at Srujana
+A perorming s at [a] stage[1] for 4 sec.
+B b left because of impatience
+A perormance s at [a] stage[1] finished.
+A collecting t-shirt
+A s collected t-shirt from co-ordinator 1
+A s returned home happily :)...Yayy!!
+
+SIMULATION OVER
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+[Sample test 4 Trial]
+INPUT:
+
+10 2 3 5 2 6 3
+A1 s 0
+A2 v 0
+A3 b 0
+A4 p 0
+A5 b 1
+A6 s 1
+A7 s 3
+A8 g 2
+A9 s 20
+A10 g 30
+
+OUTPUT:
+
+
+SIMULATION BEGIN
+
+A1 s arrives at Srujana
+A1 perorming s at [a] stage[1] for 5 sec.
+A2 v arrives at Srujana
+A2 perorming v at [a] stage[2] for 3 sec.
+A3 b arrives at Srujana
+A3 perorming b at [e] stage[3] for 4 sec.
+A4 p arrives at Srujana
+A4 perorming p at [e] stage[4] for 2 sec.
+A5 b arrives at Srujana
+A5 perorming b at [e] stage[5] for 5 sec.
+A6 s arrives at Srujana
+Singer A6 joined the Musician A2 performance
+A4 perormance p at [e] stage[4] finished.
+A4 collecting t-shirt
+A8 g arrives at Srujana
+A8 perorming g at [e] stage[4] for 2 sec.
+A7 s arrives at Srujana
+Singer A7 joined the Musician A3 performance
+A4 p collected t-shirt from co-ordinator 1
+A4 p returned home happily :)...Yayy!!
+A8 perormance g at [e] stage[4] finished.
+A8 collecting t-shirt
+A1 perormance s at [a] stage[1] finished.
+A1 collecting t-shirt
+A2 perormance v at [a] stage[2] finished.
+A2 collecting t-shirt
+A6 perormance s at [a] stage[2] finished.
+A6 collecting t-shirt
+A3 perormance b at [e] stage[3] finished.
+A3 collecting t-shirt
+A5 perormance b at [e] stage[5] finished.
+A5 collecting t-shirt
+A7 perormance s at [e] stage[3] finished.
+A7 collecting t-shirt
+A8 g collected t-shirt from co-ordinator 2
+A8 g returned home happily :)...Yayy!!
+A1 s collected t-shirt from co-ordinator 3
+A1 s returned home happily :)...Yayy!!
+A2 v collected t-shirt from co-ordinator 3
+A2 v returned home happily :)...Yayy!!
+A3 b collected t-shirt from co-ordinator 4
+A3 b returned home happily :)...Yayy!!
+A5 b collected t-shirt from co-ordinator 5
+A5 b returned home happily :)...Yayy!!
+A6 s collected t-shirt from co-ordinator 1
+A6 s returned home happily :)...Yayy!!
+A7 s collected t-shirt from co-ordinator 2
+A7 s returned home happily :)...Yayy!!
+A9 s arrives at Srujana
+A9 perorming s at [a] stage[1] for 3 sec.
+A9 perormance s at [a] stage[1] finished.
+A9 collecting t-shirt
+A9 s collected t-shirt from co-ordinator 3
+A9 s returned home happily :)...Yayy!!
+A10 g arrives at Srujana
+A10 perorming g at [a] stage[1] for 4 sec.
+A10 perormance g at [a] stage[1] finished.
+A10 collecting t-shirt
+A10 g collected t-shirt from co-ordinator 4
+A10 g returned home happily :)...Yayy!!
+
+SIMULATION OVER
+
+----------------------------------------------------------------------------------------------------------------------------------
