@@ -1,0 +1,96 @@
+---------------------------------
+| Concurrent MergeSort Analysis |
+---------------------------------
+
+There is 3 MergeSort Implementation have been used with the condition that if array size
+becomes less than 5 then trivial selection sort will be used(As required in the question).
+
+(1)  Normal MergeSort
+(2)  Threaded MergeSort
+(3)  Multi-Process MergeSort
+
+
+Comparison of above 3 implementations:
+--------------------------------------
+
+In General ,The normal merge sort is the fastest due to no extra processing  and no creation 
+of the threads and processes . Next is the Multi-threaded Merge sort which is faster than 
+Concurrent Merge sort as Concurrent Merge sort requires more time for coping the PCB of the 
+process whereas in Threaded Merge Sort there is some common section which is not needed to 
+be copied.
+The reason why Normal MergeSort is faster than other two can be understood due to context switching
+and  also due to cache misses.
+
+
+Functions and their objective:
+------------------------------
+
+(1) 
+LLI* get_shared_mem(int arr_size);
+
+USE =>
+This function returns a pointer to (type casted to int) shared memory which gets share between the 
+childs of a process or between threads.Shmtget is used to allocate the memory segment and shmat is 
+used to attach that shared segment to the return int pointer.  Errors have been handled.
+
+
+(2) 
+void print_arr(LLI arr_sz,LLI* arr);
+
+USE =>
+This function basically prints the array 'arr' with size 'aar_sz'.
+
+
+(3) 
+void selection_sort(LLI* s_arr,LLI low,LLI high);
+
+USE =>
+This function is just a trivial Selection sort.It will get implemented for all the 
+3 methods , if array size become less than 5.
+
+
+(4) 
+void merge(LLI* BRR,LLI low,LLI mid,LLI high);
+
+USE =>
+We can directly copy  the sorted elements in the final array, no need for a temporary sorted array. 
+This is for merging left and right array.It takes argument as array,left index, right index, mid value.
+
+
+
+(5) 
+void* multiprocess_mergesort(LLI* ARR,LLI low,LLI high);
+
+USE =>
+
+This function implements that if array has length less than 5 then it performs selection sort . If greater 
+then it splits the array into left and right part and forks and create process to sort left part and in 
+parent it again forks to create process to sort right part . In the parent it waits for child process and 
+join left and right process.
+
+
+
+(6) 
+void* threaded_mergesort(void* T_ARR);
+
+USE =>
+This function is already well commented for understanding.
+
+
+
+
+(7) 
+void* normal_mergesort(LLI * BRR,LLI low, LLI high);
+
+USE =>
+This function implements normal merge sort 
+
+
+
+(8) 
+int main();
+
+USE =>
+This part of code is already well commented such that it explains every working of evry line.This is 
+the driver code of the problem where it calls different functions for execution . The basic general 
+functions for printing has not been explained as they were understood from their name.
