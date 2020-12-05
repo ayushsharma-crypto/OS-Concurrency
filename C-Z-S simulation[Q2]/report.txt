@@ -1,0 +1,600 @@
+---------------------------------------------------------------
+| STUDENT, VACCINATION ZONE, PHARMACETICAL COMPANY SIMULATOR  |
+---------------------------------------------------------------
+This file contains 2 test case(that i runned on my pc) and explanation of code line by line.
+
+
+Explanation of Code and APPROACH :
+----------------------------------
+
+I have created single Thread for each Student, Vaccination zone and Pharma. Company.
+* One can change the randomness of all random variable like p,w,r if wanted.
+* All the statements as required in the question gets printed in color.
+* Explained the full code(int this files). 
+
+Header files:-
+--------------
+
+#include<stdio.h>
+#include<stdlib.h>
+#include<pthread.h>
+#include<unistd.h>
+#include<time.h>
+______________________________________________________________________________________________
+
+
+Defing Values:-
+---------------
+#define MAX_COMPANY 1000
+#define MAX_ZONE 1000
+#define MAX_STUDENT 1000
+
+/* Below are color codes */
+
+#define A_NRM  "\x1B[1;0m"
+#define A_RED  "\x1B[1;31m"
+#define A_GRN  "\x1B[1;32m"
+#define A_YEL  "\x1B[1;33m"
+#define A_BLU  "\x1B[1;34m"
+#define A_MAG  "\x1B[1;35m"
+#define A_CYN  "\x1B[1;36m"
+______________________________________________________________________________________________
+
+Structure for 1 Pharmaceutical company:-
+-----------------------------------------
+struct Company{
+    int idx;                    // Id of Company
+    int batch_left;                 // Batch left out of the prepared ones.
+    int sent_batch_left;                    // Batch left out of the batches sent to V. Zones
+    int batch_capacity;                 // Capacity i.e. number of vaccines in a batch
+    float batch_prob;                   // Batch probability of success of vaccines
+    pthread_t company_tid;                  // Thread ID of respective company
+    pthread_mutex_t company_mutex;                  // Mutex so that two zones donot access same company at the same time i.e Mutual exclusion for getting batch of vaccine.
+    pthread_cond_t cv_zone;                 // Conditional variable which will check whether sum of batch_left + sent_batch_left is 0 or not.
+}company[MAX_COMPANY];
+
+
+Structure for 1 Vaccination Zone:-
+----------------------------------
+
+struct Vzone{
+    int idx;                    // ID of Zone
+    int curr_company;                   // Company Id whose batch is there currently in the zone.
+    float curr_batch_prob;                  // Batch probablitiy of Company whose batch is there currently in the zone.
+    int curr_capacity;                  // Remaing vaccine  currently in the zone.
+    int curr_occupied;                  // Occupied slots out of the available one in one round.
+    int curr_slot;                  // Slots made in one round.
+    pthread_t zone_tid;                 // Thread ID of respective Zone
+    pthread_mutex_t zone_mutex;                 // Mutex so that two student donot access same slot at specific zone at the same time i.e Mutual exclusion for getting batch of vaccine.
+                                                // Please read zone thread function for more clarity.
+    pthread_cond_t cv_student;                  // Conditional variable which will check whether all slot got fully occupied and used or not in one roud.
+}vzone[MAX_ZONE];
+
+
+Structure for 1 Student:-
+-------------------------
+
+struct Student{
+    int idx;                    // ID of the student
+    pthread_t student_tid;                  // Thread ID of the respective student.
+}student[MAX_STUDENT];
+
+______________________________________________________________________________________________
+
+
+Thread function and some global variable declaration :-
+------------------------------------------------------
+
+void *company_thread(void* company_arg);
+void *vzone_thread(void* vzone_arg);
+void *student_thread(void* student_arg);
+
+int companyx,vzonex,studentx,total_current_student;
+pthread_mutex_t change_student,S_W_T;  // keep track of total_current_student and student_went_home int variables respectively.
+int student_went_home;
+
+
+______________________________________________________________________________________________
+
+
+Main function:-
+---------------
+
+This function will take inputs and set values of global variable and intializes all the structure 
+of struct arrays that are company[MAX_COMPANY],vzone[MAX_ZONE],student[MAX_STUDENT].
+It also initialises Mutexes for all the threads.
+And checks for number of company,zones and students.
+
+Then it creates threads using ' pthread_create ' function.
+Once all the students leave , all the students thread will get joined.
+
+But for company and zones thread,
+it will Destroy a mutex and Cancel THREAD immediately or at the next possibility.
+
+The code is as follow :-
+
+
+int main()
+{
+    srand(time(0));
+    scanf("%d %d %d",&companyx,&vzonex,&studentx);
+
+
+    if(companyx==0)
+    {
+        printf("NO COMPANY ,SO NO VACCINES\n");
+        return 0;
+    }
+    else if (studentx==0)
+    {
+        printf("NO STUDENT ,SO NOT SLOTS\n");
+        return 0;
+    }
+    else if (vzonex==0)
+    {
+        printf("NO VACCINATION ZONES \n");
+        return 0;
+    }
+
+    total_current_student=0;
+    student_went_home=0;
+    
+    for(int i=0;i<companyx;i++)
+    {
+        float prob;
+        scanf("%f",&prob);
+        company[i].idx=i+1;
+        company[i].batch_prob=prob;
+        pthread_mutex_init(&(company[i].company_mutex),NULL);
+    }
+
+    for(int i=0;i<vzonex;i++) 
+    { 
+        vzone[i].idx=i+1;
+        pthread_mutex_init(&(vzone[i].zone_mutex),NULL);
+    }
+
+    for(int i=0;i<studentx;i++) { student[i].idx=i+1; };
+
+    printf("%sSIMULATION BEGIN\n\n%s",A_RED,A_NRM);
+
+    for(int i=0;i<companyx;i++) { pthread_create(&(company[i].company_tid),NULL,company_thread,&company[i]); }
+    for(int i=0;i<studentx;i++) { pthread_create(&(student[i].student_tid),NULL,student_thread,&student[i]); }
+    for(int i=0;i<vzonex;i++) { pthread_create(&(vzone[i].zone_tid),NULL,vzone_thread,&vzone[i]); }
+
+    for(int i=0;i<studentx;i++) { pthread_join(student[i].student_tid,0); }
+
+    printf("\n%sSIMULATION OVER\n%s",A_RED,A_NRM);
+
+
+    for(int i=0;i<companyx;i++) 
+    { 
+        pthread_mutex_destroy(&(company[i].company_mutex)); 
+        pthread_cancel(company[i].company_tid);
+    }
+    for(int i=0;i<vzonex;i++) 
+    { 
+        pthread_mutex_destroy(&(vzone[i].zone_mutex)); 
+        pthread_cancel(vzone[i].zone_tid);
+    }
+    
+    return 0;
+}
+
+______________________________________________________________________________________________
+
+Random function:-
+-----------------
+
+This function will generate a random number between intger 'low' and integer 'high'(including them too).
+
+int random_num(int low,int high)
+{
+    // Carefull low and high can take only non-negetive integers. And high >= low.
+    int increment;
+    if(high<=low-1) return 0;
+    increment = rand()%(high-low+1);
+    return increment+low;
+}
+
+
+______________________________________________________________________________________________
+
+
+Company thread function:-
+-------------------------
+
+This function is the work-flow obeyed by the all the pharmaceutical company threads.
+
+Description:-
+-------------
+-> First of all the thread will be in loop untill when all the student left the the vaccination zone whether successfully or unsuccessfully.
+
+-> Then it calculates for one round of batch production (i) number of batches (ii) number of vaccines in each batch
+   and also find random time to prepare all those batches.
+
+-> Then sleep for that random time.
+
+-> After that it will assign values to all remaining variable in that company struct those are:
+    curr_company->batch_left=r;
+    curr_company->batch_capacity=p;
+    curr_company->sent_batch_left=0;
+
+-> The following lines of the code(it the fuction) allows to wait the company until all the 
+   vaccine it distributed to vaccination zones gets finished.
+   *** Also Conditional wait to avoid busy waiting ***
+
+
+        while((curr_company->batch_left) + (curr_company->sent_batch_left))
+        {
+            pthread_cond_wait(&(curr_company->cv_zone),&(curr_company->company_mutex));
+        }
+
+-> And for the mutex variable  ' company_mutex ' (i.e. it's lock and unlock function), I don't think that requires explanation beacuse, 
+   I think thats a general way/ method for incorporating our conditional variable cv_zone,, untill all vaccination zone exhaut their batches.
+   And it will help in ' Mutual Exclusion ' for zones thread later.
+
+The function is as follows:
+
+void *company_thread(void* company_arg)
+{
+    struct Company *curr_company = (struct Company*)company_arg;
+    int flag=1;
+    while(flag)
+    {
+        if(student_went_home==studentx)  {return NULL;}
+        
+        int r = random_num(1,5);   // Number of batches to prepare.
+        int w = random_num(2,5);   // Time taken to prepare all 'r' the batches.
+        int p = random_num(10,20); // Number of vaccine in each batch.
+
+        printf("%sPharmaceutical Company %d is preparing %d batches of vaccines each with capacity %d, which have success probability %f%s\n",A_GRN,curr_company->idx,r,p,curr_company->batch_prob,A_NRM);
+        sleep(w);
+        pthread_mutex_lock(&(curr_company->company_mutex));
+        curr_company->batch_left=r;
+        curr_company->batch_capacity=p;
+        curr_company->sent_batch_left=0;
+        printf("%sPharmaceutical Company %d has prepared %d batches of vaccines each with capacity %d, which have success probability %f%s\n",A_BLU,curr_company->idx,r,p,curr_company->batch_prob,A_NRM);
+        
+        while((curr_company->batch_left) + (curr_company->sent_batch_left))
+        {
+            pthread_cond_wait(&(curr_company->cv_zone),&(curr_company->company_mutex));
+        }
+        printf("%sAll the vaccines prepared by pharmaceutical company %d are emptied. Resuming production now\n%s",A_GRN,curr_company->idx,A_NRM);
+        pthread_mutex_unlock(&(curr_company->company_mutex));
+    }
+    return NULL;
+}
+
+
+______________________________________________________________________________________________
+
+
+Vacination zone thread function:-
+---------------------------------
+
+
+This function is the work-flow obeyed by the all the vaccination zones threads.
+
+Description:-
+-------------
+
+Every zone thread will loop continuosly until when all the student left the the vaccination zone whether successfully or unsuccessfully.
+
+Until then it will loop over Company threads and take a batch of vaccine if available.
+If available the it will move to next while loop i.e. ' while(got_batch)',
+where it will make slots for the students accordingly.
+
+Let's discus first part that is taking a batch from company.
+-> Every zone will loop over the the company thread whose 'ME' is guaranteed by 'pthread_mutex_lock(&(company[i].company_mutex))'.
+-> It checks if any batch is available, if yes then take that and initialis struct variables for zone.
+-> Next whether you get batch or not, send conditional signal to Corresponding company thread and unlock mutex 'company_mutex'.
+
+Next part is slot making code for students.
+-> It will first check condition on capacity of vaccine i.e. quantities left if it is zero 
+   then it will check if all student went home then returnimmediately i.e. stop all zone process.
+   otherwise inform the company thread that my batch got finished.
+   and Break.
+
+-> Next it will find max possible slot and assign it to curr_vzone->curr_slot and ' curr_vzone->curr_occupied=0 ' which is slots occupied.
+-> If there is slot it will print on console about it.
+-> Next it will do conditional waiting until all the slots got occupied through following line:
+
+
+            while(curr_vzone->curr_slot != curr_vzone->curr_occupied)
+            {
+                pthread_cond_wait(&(curr_vzone->cv_student),&(curr_vzone->zone_mutex));
+            }
+-> Next it will unlock the mutex ' curr_vzone->zone_mutex '.
+
+The code is as follows:
+
+void *vzone_thread(void* vzone_arg)
+{
+    struct Vzone *curr_vzone = (struct Vzone*)vzone_arg;
+    int work_always=1;
+    while(work_always)
+    {
+        int got_batch=0;
+        for(int i=0;i<companyx;i++)
+        {
+            pthread_mutex_lock(&(company[i].company_mutex));
+            if( 0 < company[i].batch_left )
+            {
+                got_batch=1;
+                curr_vzone->curr_company=company[i].idx;
+                curr_vzone->curr_batch_prob=company[i].batch_prob;
+                curr_vzone->curr_capacity=company[i].batch_capacity;
+                company[i].batch_left--;
+                company[i].sent_batch_left++;
+                printf("%sPharmaceutical Company %d has delivered vaccines to Vaccination zone %d, resuming vaccinations now\n%s",A_YEL,company[i].idx,curr_vzone->idx,A_NRM);
+                pthread_cond_signal(&(company[i].cv_zone));
+                pthread_mutex_unlock(&(company[i].company_mutex));
+                break;
+            }
+            pthread_cond_signal(&(company[i].cv_zone));
+            pthread_mutex_unlock(&(company[i].company_mutex));
+        }
+
+        while(got_batch)
+        {
+            pthread_mutex_lock(&(curr_vzone->zone_mutex));
+            if(curr_vzone->curr_capacity == 0)
+            {
+                if(student_went_home==studentx)  {return NULL;}
+
+                printf("%sVaccination Zone %d has run out of vaccines\n%s",A_MAG,curr_vzone->idx,A_NRM);
+                company[(curr_vzone->curr_company)-1].sent_batch_left--;
+                pthread_cond_signal(&(company[(curr_vzone->curr_company)-1].cv_zone));
+                pthread_mutex_unlock(&(curr_vzone->zone_mutex));
+                break;
+            }
+
+            int max_slot = 8;
+            if(curr_vzone->curr_capacity < max_slot) { max_slot=curr_vzone->curr_capacity; };
+            if(total_current_student < max_slot) { max_slot=total_current_student; };
+
+            curr_vzone->curr_occupied=0;
+            curr_vzone->curr_slot = random_num(1,max_slot);
+            curr_vzone->curr_capacity -= curr_vzone->curr_slot;
+
+            if(curr_vzone->curr_slot!=0)
+            {                    
+                printf("%sVaccination Zone %d is ready to vaccinate with %d slots%s\n",A_YEL,curr_vzone->idx,curr_vzone->curr_slot,A_NRM);
+                printf("%sVaccination Zone %d entering Vaccination Phase%s\n",A_YEL,curr_vzone->idx,A_NRM);
+            }
+
+            while(curr_vzone->curr_slot != curr_vzone->curr_occupied)
+            {
+                pthread_cond_wait(&(curr_vzone->cv_student),&(curr_vzone->zone_mutex));
+            }
+
+            pthread_mutex_unlock(&(curr_vzone->zone_mutex));
+        }
+    }
+    return NULL;
+}
+
+
+
+______________________________________________________________________________________________
+
+
+Probability function:-
+---------------------------------
+
+-> This function will just return 0 with probability 'prob' 
+    otherwise 1.
+-> This will help in getting Students antibodies formation clarification.
+
+int probability(float prob)
+{
+    float ran_num = (float)(rand()%101)/100;
+    if((ran_num <= prob) && (prob!=0)) return 0;    //Student vaccinated successfully. i.e antibodies formed.
+    else return 1;  //Student vaccination failed.
+}
+
+
+______________________________________________________________________________________________
+
+
+Vacination zone thread function:-
+---------------------------------
+
+
+This function is the work-flow obeyed by the all the Students threads.
+
+Description:-
+-------------
+
+-> The flow is divided itno 3 parts.
+    (1) 'Sleep()' part
+        -> Student will sleep for random time before the get enter IIIT.
+
+    (2) 'While loop' part (explain later)
+
+    (3) 'SWT++' part
+        -> In this part "student_went_home++;" statement gets executed which is total student left and it's Mutual 
+           exclusion among students processes will be guaranteed by 'S_W_T' mutex variable.
+
+'While loop' part :-
+
+-> Student enter IIIT.
+
+-> They can enter at max 3 time , this has been implemented using entry_type varibale and condtion 'while(entry_type < 3)'
+
+-> Then 'total_current_student++ ' statement get executed that represent increase in total waiting student and it's
+    Mutex varibale ' change_student ' has been used for mutual exclusion of this increment statement among students process.
+
+-> It will keep loop over zones while it doesn't get a slot. And keep sending cond_signal to zone thread through line
+   pthread_cond_signal(&(vzone[i].cv_student));.
+
+-> If any zone has slot left in it's current round then it will get that slot. This slot getting will be guaranteed 
+   for Mutual exclusion by mutex variable (vzone[i].zone_mutex) for that zone.
+
+-> The slot will be occupied and got_slot=1 and 'total_current_student--;'.
+
+-> Once student's vaccination get over it will check for it's antibody formation in his/her blood.
+   This will get checked by probability(succes_prob) and then accordingly re-loop for slots 
+   (i.e. if required and entry_type<3).
+
+
+void *student_thread(void* student_arg)
+{
+    struct Student *curr_student = (struct Student*)student_arg;
+    int arrival_time = random_num(0,15);
+    sleep(arrival_time);
+    int entry_type =0;
+
+    while(entry_type < 3)
+    {
+        pthread_mutex_lock(&change_student);
+        total_current_student++;
+        entry_type++;
+        printf("%sStudent %d has arrived for his round %d of Vaccination%s\n",A_MAG,curr_student->idx,entry_type,A_NRM);
+        printf("%sStudent %d is waiting to be allocated a slot on a Vaccination Zone\n%s",A_MAG,curr_student->idx,A_NRM);
+        pthread_mutex_unlock(&change_student);
+
+        int got_slot=0,V_zone;
+        float succes_prob;
+        while(!got_slot)
+        {
+            for(int i=0;i<vzonex;i++)
+            {
+                pthread_mutex_lock(&(vzone[i].zone_mutex));
+                if(vzone[i].curr_slot > vzone[i].curr_occupied)
+                {
+                    vzone[i].curr_occupied++;
+                    got_slot=1;
+                    V_zone=vzone[i].idx;
+                    succes_prob=vzone[i].curr_batch_prob;
+
+                    pthread_mutex_lock(&change_student);
+                    total_current_student--;
+                    pthread_mutex_unlock(&change_student);
+
+                    printf("%sStudent %d assigned a slot on the Vaccination Zone %d and waiting to be vaccinated\n%s",A_CYN,curr_student->idx,vzone[i].idx,A_NRM);
+                    printf("%sStudent %d on Vaccination Zone %d is getting vaccinated which has success probability %f\n%s",A_CYN,curr_student->idx,vzone[i].idx,vzone[i].curr_batch_prob,A_NRM);
+                    sleep(2);
+                    printf("%sStudent %d on Vaccination Zone %d has been vaccinated which has success probability %f\n%s",A_CYN,curr_student->idx,V_zone,succes_prob,A_NRM);
+
+                    if(probability(succes_prob))
+                    {
+                        printf("%sStudent %d has tested negetive for antibodies\n%s",A_RED,curr_student->idx,A_NRM);
+                    }
+                    else
+                    {
+                        printf("%sStudent %d has tested positive for antibodies\n%s",A_GRN,curr_student->idx,A_NRM);
+                        entry_type=4;
+                    }
+
+
+
+                    pthread_cond_signal(&(vzone[i].cv_student));
+                    pthread_mutex_unlock(&(vzone[i].zone_mutex));
+                    break;
+                }
+
+                pthread_cond_signal(&(vzone[i].cv_student));
+                pthread_mutex_unlock(&(vzone[i].zone_mutex));
+            }
+        }
+        
+    }
+    pthread_mutex_lock(&S_W_T);
+    student_went_home++;
+    pthread_mutex_unlock(&S_W_T);
+    return NULL;
+}
+
+
+
+
+
+
+SAMPLE TEST CASE FOR THE CODE:-
+-------------------------------
+(1)
+
+
+1 1 1 0
+SIMULATION BEGIN
+
+Pharmaceutical Company 1 is preparing 2 batches of vaccines each with capacity 1, which have success probability 0.000000
+Student 1 has arrived for his round 1 of Vaccination
+Student 1 is waiting to be allocated a slot on a Vaccination Zone
+Pharmaceutical Company 1 has prepared 2 batches of vaccines each with capacity 1, which have success probability 0.000000
+Pharmaceutical Company 1 has delivered vaccines to Vaccination zone 1, resuming vaccinations now
+Vaccination Zone 1 is ready to vaccinate with 1 slots
+Vaccination Zone 1 entering Vaccination Phase
+Student 1 assigned a slot on the Vaccination Zone 1 and waiting to be vaccinated
+Student 1 on Vaccination Zone 1 is getting vaccinated which has success probability 0.000000
+Student 1 on Vaccination Zone 1 has been vaccinated which has success probability 0.000000
+Student 1 has tested negetive for antibodies
+Student 1 has arrived for his round 2 of Vaccination
+Student 1 is waiting to be allocated a slot on a Vaccination Zone
+Vaccination Zone 1 has run out of vaccines
+Pharmaceutical Company 1 has delivered vaccines to Vaccination zone 1, resuming vaccinations now
+Vaccination Zone 1 is ready to vaccinate with 1 slots
+Vaccination Zone 1 entering Vaccination Phase
+Student 1 assigned a slot on the Vaccination Zone 1 and waiting to be vaccinated
+Student 1 on Vaccination Zone 1 is getting vaccinated which has success probability 0.000000
+Student 1 on Vaccination Zone 1 has been vaccinated which has success probability 0.000000
+Student 1 has tested negetive for antibodies
+Student 1 has arrived for his round 3 of Vaccination
+Student 1 is waiting to be allocated a slot on a Vaccination Zone
+Vaccination Zone 1 has run out of vaccines
+All the vaccines prepared by pharmaceutical company 1 are emptied. Resuming production now
+Pharmaceutical Company 1 is preparing 4 batches of vaccines each with capacity 2, which have success probability 0.000000
+Pharmaceutical Company 1 has prepared 4 batches of vaccines each with capacity 2, which have success probability 0.000000
+Pharmaceutical Company 1 has delivered vaccines to Vaccination zone 1, resuming vaccinations now
+Vaccination Zone 1 is ready to vaccinate with 1 slots
+Vaccination Zone 1 entering Vaccination Phase
+Student 1 assigned a slot on the Vaccination Zone 1 and waiting to be vaccinated
+Student 1 on Vaccination Zone 1 is getting vaccinated which has success probability 0.000000
+Student 1 on Vaccination Zone 1 has been vaccinated which has success probability 0.000000
+Student 1 has tested negetive for antibodies
+
+SIMULATION OVER
+
+
+(2)
+
+5 1 2 0.9 1 1 1 1
+SIMULATION BEGIN
+
+Pharmaceutical Company 1 is preparing 5 batches of vaccines each with capacity 19, which have success probability 0.900000
+Pharmaceutical Company 2 is preparing 4 batches of vaccines each with capacity 16, which have success probability 1.000000
+Pharmaceutical Company 3 is preparing 4 batches of vaccines each with capacity 14, which have success probability 1.000000
+Pharmaceutical Company 4 is preparing 3 batches of vaccines each with capacity 12, which have success probability 1.000000
+Pharmaceutical Company 5 is preparing 2 batches of vaccines each with capacity 17, which have success probability 1.000000
+Pharmaceutical Company 1 has prepared 5 batches of vaccines each with capacity 19, which have success probability 0.900000
+Pharmaceutical Company 1 has delivered vaccines to Vaccination zone 1, resuming vaccinations now
+Pharmaceutical Company 4 has prepared 3 batches of vaccines each with capacity 12, which have success probability 1.000000
+Pharmaceutical Company 2 has prepared 4 batches of vaccines each with capacity 16, which have success probability 1.000000
+Pharmaceutical Company 3 has prepared 4 batches of vaccines each with capacity 14, which have success probability 1.000000
+Pharmaceutical Company 5 has prepared 2 batches of vaccines each with capacity 17, which have success probability 1.000000
+Vaccination Zone 1 is ready to vaccinate with 1 slots
+Vaccination Zone 1 entering Vaccination Phase
+Student 2 has arrived for his round 1 of Vaccination
+Student 2 is waiting to be allocated a slot on a Vaccination Zone
+Student 2 assigned a slot on the Vaccination Zone 1 and waiting to be vaccinated
+Student 2 on Vaccination Zone 1 is getting vaccinated which has success probability 0.900000
+Student 2 on Vaccination Zone 1 has been vaccinated which has success probability 0.900000
+Student 2 has tested positive for antibodies
+Student 1 has arrived for his round 1 of Vaccination
+Student 1 is waiting to be allocated a slot on a Vaccination Zone
+Vaccination Zone 1 is ready to vaccinate with 1 slots
+Vaccination Zone 1 entering Vaccination Phase
+Student 1 assigned a slot on the Vaccination Zone 1 and waiting to be vaccinated
+Student 1 on Vaccination Zone 1 is getting vaccinated which has success probability 0.900000
+Student 1 on Vaccination Zone 1 has been vaccinated which has success probability 0.900000
+Student 1 has tested positive for antibodies
+
+SIMULATION OVER
+
+
+ ____________________________________________________________________________________
+|                                                                                    |
+|                                !!  THE END !!                                      |
+|____________________________________________________________________________________|
